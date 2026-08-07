@@ -3,9 +3,10 @@
  * calculation and storage modules, manages application state.
  */
 
-import { toLitersPerMinute, fromLitersPerMinute, calculateVerification, calculateCalibration, calculateWeightedCalibration, suggestAlternativeTime, validateFlowRate } from './calc.js';
+import { toLitersPerMinute, fromLitersPerMinute, calculateVerification, calculateCalibration, calculateWeightedCalibration, suggestAlternativeTime, validateFlowRate, toLitersPerHour } from './calc.js';
 import { saveState, loadState, resetState, isStorageAvailable } from './storage.js';
 import { exportConfig, importConfig } from './io.js';
+import { APP_VERSION } from './version.js';
 
 // ─── Application State ───────────────────────────────────────────────────────
 
@@ -455,10 +456,10 @@ function renderPotCard(pot) {
           resultEl.textContent = `Portate: ${flowTexts.join(', ')}`;
 
           // Check if any flow is out of range and show suggestion
-          const anyOutOfRange = flowRates.some(f => !validateFlowRate(f).valid);
+          const anyOutOfRange = flowRates.some(f => !validateFlowRate(f * 60).valid);
           if (anyOutOfRange) {
             const avgFlow = flowRates.reduce((s, f) => s + f, 0) / flowRates.length;
-            const bound = avgFlow < 1 ? 'min' : 'max';
+            const bound = avgFlow * 60 < 1 ? 'min' : 'max';
             const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
             resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
             resultEl.classList.add('pot-card__result--warning');
@@ -470,9 +471,9 @@ function renderPotCard(pot) {
         resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
 
         // Validate flow and show alternative time suggestion if out of range
-        const validation = validateFlowRate(requiredFlow);
+        const validation = validateFlowRate(requiredFlow * 60);
         if (!validation.valid) {
-          const bound = requiredFlow < 1 ? 'min' : 'max';
+          const bound = requiredFlow * 60 < 1 ? 'min' : 'max';
           const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
           resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
           resultEl.classList.add('pot-card__result--warning');
@@ -1083,12 +1084,13 @@ function validateAndShowDripperError(potId, dripperId) {
   }
 
   const lpm = toLitersPerMinute(value, dripper.unit, state.dropFactor);
-  const result = validateFlowRate(lpm);
+  const lph = toLitersPerHour(lpm);
+  const result = validateFlowRate(lph);
 
   if (!result.valid) {
     input.classList.add('error');
     errorEl.style.display = 'block';
-    errorEl.textContent = `Portata fuori range: ${lpm.toFixed(2)} l/min. Range consentito: 1–8 l/min`;
+    errorEl.textContent = `Portata fuori range: ${lph.toFixed(2)} l/h. Range consentito: 1–8 l/h`;
   } else {
     input.classList.remove('error');
     errorEl.style.display = 'none';
@@ -1118,12 +1120,13 @@ function validateAndShowUniformError(potId) {
   }
 
   const lpm = toLitersPerMinute(value, pot.uniformUnit, state.dropFactor);
-  const result = validateFlowRate(lpm);
+  const lph = toLitersPerHour(lpm);
+  const result = validateFlowRate(lph);
 
   if (!result.valid) {
     input.classList.add('error');
     errorEl.style.display = 'block';
-    errorEl.textContent = `Portata fuori range: ${lpm.toFixed(2)} l/min. Range consentito: 1–8 l/min`;
+    errorEl.textContent = `Portata fuori range: ${lph.toFixed(2)} l/h. Range consentito: 1–8 l/h`;
   } else {
     input.classList.remove('error');
     errorEl.style.display = 'none';
@@ -1231,10 +1234,10 @@ function updateCalibrationResult(resultEl, pot) {
         const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
         const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
         resultEl.textContent = `Portate: ${flowTexts.join(', ')}`;
-        const anyOutOfRange = flowRates.some(f => !validateFlowRate(f).valid);
+        const anyOutOfRange = flowRates.some(f => !validateFlowRate(f * 60).valid);
         if (anyOutOfRange) {
           const avgFlow = flowRates.reduce((s, f) => s + f, 0) / flowRates.length;
-          const bound = avgFlow < 1 ? 'min' : 'max';
+          const bound = avgFlow * 60 < 1 ? 'min' : 'max';
           const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
           resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
           resultEl.classList.add('pot-card__result--warning');
@@ -1243,9 +1246,9 @@ function updateCalibrationResult(resultEl, pot) {
     } else {
       const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
       resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
-      const validation = validateFlowRate(requiredFlow);
+      const validation = validateFlowRate(requiredFlow * 60);
       if (!validation.valid) {
-        const bound = requiredFlow < 1 ? 'min' : 'max';
+        const bound = requiredFlow * 60 < 1 ? 'min' : 'max';
         const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
         resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
         resultEl.classList.add('pot-card__result--warning');
@@ -1300,10 +1303,10 @@ function handleTimeChange(value) {
             const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
             const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
             el.textContent = `Portate: ${flowTexts.join(', ')}`;
-            const anyOutOfRange = flowRates.some(f => !validateFlowRate(f).valid);
+            const anyOutOfRange = flowRates.some(f => !validateFlowRate(f * 60).valid);
             if (anyOutOfRange) {
               const avgFlow = flowRates.reduce((s, f) => s + f, 0) / flowRates.length;
-              const bound = avgFlow < 1 ? 'min' : 'max';
+              const bound = avgFlow * 60 < 1 ? 'min' : 'max';
               const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
               el.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
               el.classList.add('pot-card__result--warning');
@@ -1312,9 +1315,9 @@ function handleTimeChange(value) {
         } else {
           const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
           el.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
-          const validation = validateFlowRate(requiredFlow);
+          const validation = validateFlowRate(requiredFlow * 60);
           if (!validation.valid) {
-            const bound = requiredFlow < 1 ? 'min' : 'max';
+            const bound = requiredFlow * 60 < 1 ? 'min' : 'max';
             const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
             el.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
             el.classList.add('pot-card__result--warning');
@@ -1453,6 +1456,10 @@ export function init() {
 
   // 5. Render initial UI
   render();
+
+  // 6. Display version
+  const versionEl = document.getElementById('app-version');
+  if (versionEl) versionEl.textContent = `v${APP_VERSION}`;
 }
 
 // Auto-initialize on DOMContentLoaded

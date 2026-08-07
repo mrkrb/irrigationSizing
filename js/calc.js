@@ -87,32 +87,40 @@ export function calculateWeightedCalibration(desiredLiters, timeMinutes, weights
 }
 
 /**
+ * Converts a flow rate from l/min to l/h.
+ * @param {number} valueLpm - Value in l/min
+ * @returns {number} Value in l/h
+ */
+export function toLitersPerHour(valueLpm) {
+  return valueLpm * 60;
+}
+
+/**
  * Calculates suggested alternative time when flow is out of range.
  * @param {number} desiredLiters - Target liters
  * @param {number} dripperCount - Number of drippers
  * @param {'min'|'max'} bound - Which bound was exceeded
- * @returns {number} Suggested time in minutes (rounded to nearest 0.5)
+ * @returns {number} Suggested time in minutes (rounded to nearest 0.5, capped at 60)
  */
 export function suggestAlternativeTime(desiredLiters, dripperCount, bound) {
-  // 'min' means flow was below minimum (1 l/min) → use 1 l/min to get longer time
-  // 'max' means flow exceeded maximum (8 l/min) → use 8 l/min to get shorter time
-  const boundaryFlow = bound === 'max' ? 8 : 1;
-  const time = desiredLiters / (dripperCount * boundaryFlow);
-  // Round to nearest 0.5 for slider compatibility (step 0.5)
-  return Math.round(time * 2) / 2;
+  // boundary in l/min: 1 l/h = 1/60 l/min, 8 l/h = 8/60 l/min
+  const boundaryFlowLpm = bound === 'max' ? (8 / 60) : (1 / 60);
+  const time = desiredLiters / (dripperCount * boundaryFlowLpm);
+  const rounded = Math.round(time * 2) / 2;
+  return Math.min(rounded, 60);
 }
 
 /**
- * Validates a flow rate value against the 1-8 l/min range.
- * @param {number} valueLpm - Value in l/min
+ * Validates a flow rate value against the 1-8 l/h range.
+ * @param {number} valueLph - Value in l/h
  * @returns {{valid: boolean, message?: string}}
  */
-export function validateFlowRate(valueLpm) {
-  if (valueLpm >= 1 && valueLpm <= 8) {
+export function validateFlowRate(valueLph) {
+  if (valueLph >= 1 && valueLph <= 8) {
     return { valid: true };
   }
-  if (valueLpm < 1) {
-    return { valid: false, message: 'Portata inferiore al minimo consentito (1 l/min)' };
+  if (valueLph < 1) {
+    return { valid: false, message: 'Portata inferiore al minimo consentito (1 l/h)' };
   }
-  return { valid: false, message: 'Portata superiore al massimo consentito (8 l/min)' };
+  return { valid: false, message: 'Portata superiore al massimo consentito (8 l/h)' };
 }
