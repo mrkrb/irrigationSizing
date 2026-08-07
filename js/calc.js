@@ -1,0 +1,79 @@
+/**
+ * Calculation Engine — pure functions for flow rate conversion,
+ * verification, and calibration calculations.
+ */
+
+/**
+ * Converts a flow rate from any supported unit to l/min.
+ * @param {number} value - The flow rate value
+ * @param {'l/min'|'l/h'|'gocce/min'} unit - Source unit
+ * @param {number} dropFactor - Drops per ml (default 20)
+ * @returns {number} Flow rate in l/min
+ */
+export function toLitersPerMinute(value, unit, dropFactor = 20) {
+  // TODO: implement
+}
+
+/**
+ * Converts a flow rate from l/min to the target unit.
+ * @param {number} lpm - Flow rate in l/min
+ * @param {'l/min'|'l/h'|'gocce/min'} targetUnit - Target unit
+ * @param {number} dropFactor - Drops per ml (default 20)
+ * @returns {number} Flow rate in target unit
+ */
+export function fromLitersPerMinute(lpm, targetUnit, dropFactor = 20) {
+  // TODO: implement
+}
+
+/**
+ * Calculates total liters delivered per pot (Verification mode).
+ * @param {Array<{flowRate: number, unit: string}>} drippers - Array of dripper configs
+ * @param {number} timeMinutes - Activation time in minutes
+ * @param {number} dropFactor - Drops per ml
+ * @returns {number} Total liters (2 decimal precision)
+ */
+export function calculateVerification(drippers, timeMinutes, dropFactor) {
+  // TODO: implement
+}
+
+/**
+ * Calculates required flow rate per dripper (Calibration mode, uniform).
+ * @param {number} desiredLiters - Target liters for the pot
+ * @param {number} timeMinutes - Activation time in minutes
+ * @param {number} dripperCount - Number of drippers
+ * @returns {number} Required flow rate in l/min
+ */
+export function calculateCalibration(desiredLiters, timeMinutes, dripperCount) {
+  // TODO: implement
+}
+
+/**
+ * Calculates required flow rates with non-uniform weights.
+ * @param {number} desiredLiters - Target liters for the pot
+ * @param {number} timeMinutes - Activation time in minutes
+ * @param {number[]} weights - Weight per dripper
+ * @returns {number[]} Required flow rate per dripper in l/min
+ */
+export function calculateWeightedCalibration(desiredLiters, timeMinutes, weights) {
+  // TODO: implement
+}
+
+/**
+ * Calculates suggested alternative time when flow is out of range.
+ * @param {number} desiredLiters - Target liters
+ * @param {number} dripperCount - Number of drippers
+ * @param {'min'|'max'} bound - Which bound was exceeded
+ * @returns {number} Suggested time in minutes
+ */
+export function suggestAlternativeTime(desiredLiters, dripperCount, bound) {
+  // TODO: implement
+}
+
+/**
+ * Validates a flow rate value against the 1-8 l/min range.
+ * @param {number} valueLpm - Value in l/min
+ * @returns {{valid: boolean, message?: string}}
+ */
+export function validateFlowRate(valueLpm) {
+  // TODO: implement
+}
