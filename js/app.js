@@ -20,6 +20,7 @@ let state = {
 
 let storageAvailable = true;
 let saveTimer = null;
+let validationTimers = {}; // per-dripper debounce timers for flow rate validation
 
 // ─── Toast Notification ──────────────────────────────────────────────────────
 
@@ -178,51 +179,248 @@ function renderPotCard(pot) {
   header.appendChild(actions);
   card.appendChild(header);
 
+  // Uniform/differentiated toggle section
+  const toggleSection = document.createElement('div');
+  toggleSection.className = 'toggle-group';
+
+  const uniformBtn = document.createElement('button');
+  uniformBtn.type = 'button';
+  uniformBtn.className = `toggle-btn${pot.uniformFlow ? ' active' : ''}`;
+  uniformBtn.dataset.action = 'set-uniform';
+  uniformBtn.dataset.potId = pot.id;
+  uniformBtn.textContent = 'Stessa portata';
+
+  const diffBtn = document.createElement('button');
+  diffBtn.type = 'button';
+  diffBtn.className = `toggle-btn${!pot.uniformFlow ? ' active' : ''}`;
+  diffBtn.dataset.action = 'set-differentiated';
+  diffBtn.dataset.potId = pot.id;
+  diffBtn.textContent = 'Portate differenziate';
+
+  toggleSection.appendChild(uniformBtn);
+  toggleSection.appendChild(diffBtn);
+  card.appendChild(toggleSection);
+
   // Drippers section
   const drippersSection = document.createElement('div');
   drippersSection.className = 'pot-card__drippers';
 
-  pot.drippers.forEach((dripper, index) => {
-    const dripperRow = document.createElement('div');
-    dripperRow.className = 'dripper-row';
-    dripperRow.dataset.dripperId = dripper.id;
+  if (pot.uniformFlow) {
+    // Uniform mode: show a single flow rate input + unit selector
+    const uniformRow = document.createElement('div');
+    uniformRow.className = 'dripper-row dripper-row--uniform';
 
     const label = document.createElement('label');
-    label.textContent = `Gocciolatore ${index + 1}:`;
+    label.textContent = 'Portata per tutti:';
 
     const input = document.createElement('input');
     input.type = 'number';
-    input.className = 'dripper-flow';
+    input.className = 'dripper-flow uniform-flow';
     input.dataset.potId = pot.id;
-    input.dataset.dripperId = dripper.id;
-    input.dataset.field = 'flowRate';
-    input.value = dripper.flowRate != null ? dripper.flowRate : '';
+    input.dataset.field = 'uniformValue';
+    input.value = pot.uniformValue != null ? pot.uniformValue : '';
     input.placeholder = 'Portata';
     input.min = '0';
     input.step = '0.01';
 
     const unitSelect = document.createElement('select');
-    unitSelect.className = 'dripper-unit';
+    unitSelect.className = 'dripper-unit uniform-unit';
     unitSelect.dataset.potId = pot.id;
-    unitSelect.dataset.dripperId = dripper.id;
-    unitSelect.dataset.field = 'unit';
+    unitSelect.dataset.field = 'uniformUnit';
 
     const units = ['l/min', 'l/h', 'gocce/min'];
     units.forEach(u => {
       const opt = document.createElement('option');
       opt.value = u;
       opt.textContent = u;
-      if (dripper.unit === u) opt.selected = true;
+      if (pot.uniformUnit === u) opt.selected = true;
       unitSelect.appendChild(opt);
     });
 
-    dripperRow.appendChild(label);
-    dripperRow.appendChild(input);
-    dripperRow.appendChild(unitSelect);
-    drippersSection.appendChild(dripperRow);
-  });
+    uniformRow.appendChild(label);
+    uniformRow.appendChild(input);
+    uniformRow.appendChild(unitSelect);
+
+    // Error message placeholder for uniform input
+    const errorEl = document.createElement('div');
+    errorEl.className = 'error-message';
+    errorEl.dataset.validationFor = `uniform-${pot.id}`;
+    errorEl.style.display = 'none';
+
+    drippersSection.appendChild(uniformRow);
+    drippersSection.appendChild(errorEl);
+
+    // Add dripper button in uniform mode (only if fewer than 20 drippers)
+    if (pot.drippers.length < 20) {
+      const addDripperBtn = document.createElement('button');
+      addDripperBtn.type = 'button';
+      addDripperBtn.className = 'btn-add-dripper';
+      addDripperBtn.dataset.action = 'add-dripper';
+      addDripperBtn.dataset.potId = pot.id;
+      addDripperBtn.textContent = 'Aggiungi gocciolatore';
+      drippersSection.appendChild(addDripperBtn);
+    }
+
+    // Show dripper count info in uniform mode
+    const dripperCountInfo = document.createElement('p');
+    dripperCountInfo.className = 'dripper-count-info';
+    dripperCountInfo.textContent = `${pot.drippers.length} gocciolator${pot.drippers.length === 1 ? 'e' : 'i'}`;
+    drippersSection.appendChild(dripperCountInfo);
+  } else {
+    // Differentiated mode: show individual inputs per dripper
+    pot.drippers.forEach((dripper, index) => {
+      const dripperRow = document.createElement('div');
+      dripperRow.className = 'dripper-row';
+      dripperRow.dataset.dripperId = dripper.id;
+
+      const label = document.createElement('label');
+      label.textContent = `Gocciolatore ${index + 1}:`;
+
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'dripper-flow';
+      input.dataset.potId = pot.id;
+      input.dataset.dripperId = dripper.id;
+      input.dataset.field = 'flowRate';
+      input.value = dripper.flowRate != null ? dripper.flowRate : '';
+      input.placeholder = 'Portata';
+      input.min = '0';
+      input.step = '0.01';
+
+      const unitSelect = document.createElement('select');
+      unitSelect.className = 'dripper-unit';
+      unitSelect.dataset.potId = pot.id;
+      unitSelect.dataset.dripperId = dripper.id;
+      unitSelect.dataset.field = 'unit';
+
+      const units = ['l/min', 'l/h', 'gocce/min'];
+      units.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u;
+        opt.textContent = u;
+        if (dripper.unit === u) opt.selected = true;
+        unitSelect.appendChild(opt);
+      });
+
+      dripperRow.appendChild(label);
+      dripperRow.appendChild(input);
+      dripperRow.appendChild(unitSelect);
+
+      const removeDripperBtn = document.createElement('button');
+      removeDripperBtn.type = 'button';
+      removeDripperBtn.className = 'btn-remove-dripper';
+      removeDripperBtn.dataset.action = 'remove-dripper';
+      removeDripperBtn.dataset.potId = pot.id;
+      removeDripperBtn.dataset.dripperId = dripper.id;
+      removeDripperBtn.textContent = 'Rimuovi';
+      if (pot.drippers.length <= 1) {
+        removeDripperBtn.disabled = true;
+        removeDripperBtn.title = 'Un vaso deve contenere almeno 1 gocciolatore';
+      }
+      dripperRow.appendChild(removeDripperBtn);
+
+      drippersSection.appendChild(dripperRow);
+
+      // Error message placeholder per dripper
+      const errorEl = document.createElement('div');
+      errorEl.className = 'error-message';
+      errorEl.dataset.validationFor = dripper.id;
+      errorEl.style.display = 'none';
+      drippersSection.appendChild(errorEl);
+    });
+
+    // Add dripper button (only if fewer than 20 drippers)
+    if (pot.drippers.length < 20) {
+      const addDripperBtn = document.createElement('button');
+      addDripperBtn.type = 'button';
+      addDripperBtn.className = 'btn-add-dripper';
+      addDripperBtn.dataset.action = 'add-dripper';
+      addDripperBtn.dataset.potId = pot.id;
+      addDripperBtn.textContent = 'Aggiungi gocciolatore';
+      drippersSection.appendChild(addDripperBtn);
+    }
+  }
 
   card.appendChild(drippersSection);
+
+  // Calibration mode: desired liters input + non-uniform toggle + weight inputs
+  if (state.mode === 'taratura') {
+    const calibSection = document.createElement('div');
+    calibSection.className = 'pot-card__calibration';
+
+    // Desired liters input
+    const desiredRow = document.createElement('div');
+    desiredRow.className = 'desired-liters-row';
+
+    const desiredLabel = document.createElement('label');
+    desiredLabel.textContent = 'Litri desiderati:';
+
+    const desiredInput = document.createElement('input');
+    desiredInput.type = 'number';
+    desiredInput.className = 'desired-liters';
+    desiredInput.dataset.potId = pot.id;
+    desiredInput.min = '0.01';
+    desiredInput.max = '999.99';
+    desiredInput.step = '0.01';
+    desiredInput.placeholder = 'Litri';
+    desiredInput.value = state.desiredLiters[pot.id] || '';
+
+    desiredRow.appendChild(desiredLabel);
+    desiredRow.appendChild(desiredInput);
+    calibSection.appendChild(desiredRow);
+
+    // Non-uniform weights toggle
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'nonuniform-toggle-row';
+
+    const toggleLabel = document.createElement('label');
+    toggleLabel.className = 'nonuniform-label';
+
+    const toggleInput = document.createElement('input');
+    toggleInput.type = 'checkbox';
+    toggleInput.className = 'nonuniform-toggle';
+    toggleInput.dataset.potId = pot.id;
+    toggleInput.checked = !!pot.nonUniformWeights;
+
+    const toggleText = document.createTextNode(' Ripartizione non uniforme');
+    toggleLabel.appendChild(toggleInput);
+    toggleLabel.appendChild(toggleText);
+    toggleRow.appendChild(toggleLabel);
+    calibSection.appendChild(toggleRow);
+
+    // Weight inputs (shown when non-uniform is enabled)
+    if (pot.nonUniformWeights) {
+      const weightsSection = document.createElement('div');
+      weightsSection.className = 'pot-card__weights';
+
+      pot.drippers.forEach((dripper, index) => {
+        const weightRow = document.createElement('div');
+        weightRow.className = 'weight-row';
+
+        const weightLabel = document.createElement('label');
+        weightLabel.textContent = `Peso G${index + 1}:`;
+
+        const weightInput = document.createElement('input');
+        weightInput.type = 'number';
+        weightInput.className = 'dripper-weight';
+        weightInput.dataset.potId = pot.id;
+        weightInput.dataset.dripperIndex = String(index);
+        weightInput.min = '1';
+        weightInput.max = '10';
+        weightInput.step = '0.1';
+        weightInput.placeholder = 'Peso';
+        weightInput.value = (pot.weights && pot.weights[index] != null) ? pot.weights[index] : 1;
+
+        weightRow.appendChild(weightLabel);
+        weightRow.appendChild(weightInput);
+        weightsSection.appendChild(weightRow);
+      });
+
+      calibSection.appendChild(weightsSection);
+    }
+
+    card.appendChild(calibSection);
+  }
 
   // Result display
   const resultEl = document.createElement('div');
@@ -239,17 +437,65 @@ function renderPotCard(pot) {
   } else {
     // Taratura mode
     const desiredLiters = state.desiredLiters[pot.id] || 0;
-    if (state.timeMinutes > 0 && desiredLiters > 0 && pot.drippers.length > 0) {
-      const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
-      resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+    if (state.timeMinutes === 0) {
+      resultEl.textContent = 'Impostare tempo > 0 per il calcolo';
+      resultEl.classList.add('pot-card__result--warning');
+    } else if (desiredLiters > 0 && pot.drippers.length > 0) {
+      if (pot.nonUniformWeights) {
+        // Weighted calibration
+        const weightsValid = areWeightsValid(pot);
+        if (!weightsValid) {
+          resultEl.textContent = 'Pesi non validi. Inserire valori tra 1 e 10.';
+          resultEl.classList.add('pot-card__result--warning');
+        } else {
+          const weights = pot.weights.slice(0, pot.drippers.length);
+          const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
+          const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
+          resultEl.textContent = `Portate: ${flowTexts.join(', ')}`;
+
+          // Check if any flow is out of range and show suggestion
+          const anyOutOfRange = flowRates.some(f => !validateFlowRate(f).valid);
+          if (anyOutOfRange) {
+            const avgFlow = flowRates.reduce((s, f) => s + f, 0) / flowRates.length;
+            const bound = avgFlow < 1 ? 'min' : 'max';
+            const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
+            resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
+            resultEl.classList.add('pot-card__result--warning');
+          }
+        }
+      } else {
+        // Uniform calibration
+        const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
+        resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+
+        // Validate flow and show alternative time suggestion if out of range
+        const validation = validateFlowRate(requiredFlow);
+        if (!validation.valid) {
+          const bound = requiredFlow < 1 ? 'min' : 'max';
+          const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
+          resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
+          resultEl.classList.add('pot-card__result--warning');
+        }
+      }
     } else {
-      resultEl.textContent = state.timeMinutes === 0 ? 'Impostare tempo > 0 per il calcolo' : '';
+      resultEl.textContent = '';
     }
   }
 
   card.appendChild(resultEl);
 
   return card;
+}
+
+/**
+ * Checks if all weights for a pot are valid (between 1 and 10, numeric, positive).
+ * @param {object} pot - Pot data object
+ * @returns {boolean}
+ */
+function areWeightsValid(pot) {
+  if (!pot.weights || pot.weights.length < pot.drippers.length) return false;
+  const weights = pot.weights.slice(0, pot.drippers.length);
+  return weights.every(w => typeof w === 'number' && !isNaN(w) && w >= 1 && w <= 10);
 }
 
 /**
@@ -266,6 +512,37 @@ function updateTotals() {
     totalEl.textContent = total.toFixed(2);
   } else {
     totalEl.textContent = '0.00';
+  }
+}
+
+/**
+ * Updates the result display for a specific pot without full re-render.
+ */
+function updatePotResult(potId) {
+  const card = document.querySelector(`.pot-card[data-pot-id="${potId}"]`);
+  if (!card) return;
+  const resultEl = card.querySelector('.pot-card__result');
+  if (!resultEl) return;
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+
+  if (state.mode === 'verifica') {
+    if (state.timeMinutes > 0) {
+      const liters = calculateVerification(pot.drippers, state.timeMinutes, state.dropFactor);
+      resultEl.textContent = `Acqua erogata: ${liters.toFixed(2)} l`;
+      resultEl.classList.remove('pot-card__result--warning');
+    } else {
+      resultEl.textContent = 'Impostare tempo > 0 per il calcolo';
+      resultEl.classList.add('pot-card__result--warning');
+    }
+  } else {
+    const desiredLiters = state.desiredLiters[pot.id] || 0;
+    if (state.timeMinutes > 0 && desiredLiters > 0 && pot.drippers.length > 0) {
+      const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
+      resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+    } else {
+      resultEl.textContent = state.timeMinutes === 0 ? 'Impostare tempo > 0 per il calcolo' : '';
+    }
   }
 }
 
@@ -342,6 +619,18 @@ function handleMainClick(e) {
     return;
   }
 
+  // Confirm add pot form
+  if (target.dataset.action === 'confirm-add-pot') {
+    handleConfirmAddPot();
+    return;
+  }
+
+  // Cancel add pot form
+  if (target.dataset.action === 'cancel-add-pot') {
+    handleCancelAddPot();
+    return;
+  }
+
   // Remove pot
   if (target.dataset.action === 'remove-pot') {
     handleRemovePot(target.dataset.potId);
@@ -351,6 +640,30 @@ function handleMainClick(e) {
   // Duplicate pot
   if (target.dataset.action === 'duplicate-pot') {
     handleDuplicatePot(target.dataset.potId);
+    return;
+  }
+
+  // Add dripper to pot
+  if (target.dataset.action === 'add-dripper') {
+    handleAddDripper(target.dataset.potId);
+    return;
+  }
+
+  // Remove dripper from pot
+  if (target.dataset.action === 'remove-dripper') {
+    handleRemoveDripper(target.dataset.potId, target.dataset.dripperId);
+    return;
+  }
+
+  // Set uniform flow mode
+  if (target.dataset.action === 'set-uniform') {
+    handleSetUniform(target.dataset.potId);
+    return;
+  }
+
+  // Set differentiated flow mode
+  if (target.dataset.action === 'set-differentiated') {
+    handleSetDifferentiated(target.dataset.potId);
     return;
   }
 
@@ -376,12 +689,20 @@ function handleMainInput(e) {
     return;
   }
 
-  // Dripper flow rate
-  if (target.classList.contains('dripper-flow')) {
+  // Dripper flow rate (differentiated mode)
+  if (target.classList.contains('dripper-flow') && !target.classList.contains('uniform-flow')) {
     const potId = target.dataset.potId;
     const dripperId = target.dataset.dripperId;
     const value = target.value === '' ? null : parseFloat(target.value);
     handleDripperChange(potId, dripperId, 'flowRate', value);
+    return;
+  }
+
+  // Uniform flow rate input
+  if (target.classList.contains('uniform-flow')) {
+    const potId = target.dataset.potId;
+    const value = target.value === '' ? null : parseFloat(target.value);
+    handleUniformValueChange(potId, value);
     return;
   }
 
@@ -400,11 +721,18 @@ function handleMainInput(e) {
 function handleMainChange(e) {
   const target = e.target;
 
-  // Dripper unit select
-  if (target.classList.contains('dripper-unit')) {
+  // Dripper unit select (differentiated mode)
+  if (target.classList.contains('dripper-unit') && !target.classList.contains('uniform-unit')) {
     const potId = target.dataset.potId;
     const dripperId = target.dataset.dripperId;
     handleDripperChange(potId, dripperId, 'unit', target.value);
+    return;
+  }
+
+  // Uniform unit select
+  if (target.classList.contains('uniform-unit')) {
+    const potId = target.dataset.potId;
+    handleUniformUnitChange(potId, target.value);
     return;
   }
 
@@ -430,8 +758,70 @@ function handleHeaderClick(e) {
 // ─── Event Handlers ──────────────────────────────────────────────────────────
 
 function handleAddPot() {
+  // If form already visible, do nothing
+  const potList = document.getElementById('pot-list');
+  if (potList && potList.querySelector('.add-pot-form')) return;
+
+  const form = document.createElement('div');
+  form.className = 'add-pot-form';
+
+  const defaultName = generateDefaultName();
+
+  form.innerHTML = `
+    <div class="add-pot-form__field">
+      <label for="new-pot-name">Nome (max 40 caratteri):</label>
+      <input type="text" id="new-pot-name" maxlength="40" placeholder="${defaultName}" value="">
+    </div>
+    <div class="add-pot-form__field">
+      <label for="new-pot-drippers">Numero gocciolatori (1–20):</label>
+      <input type="number" id="new-pot-drippers" min="1" max="20" step="1" value="1">
+      <span class="add-pot-form__error" id="new-pot-drippers-error"></span>
+    </div>
+    <div class="add-pot-form__actions">
+      <button type="button" data-action="confirm-add-pot">Conferma</button>
+      <button type="button" data-action="cancel-add-pot">Annulla</button>
+    </div>
+  `;
+
+  const addBtn = potList.querySelector('#add-pot');
+  potList.insertBefore(form, addBtn);
+
+  // Focus the name input
+  const nameInput = form.querySelector('#new-pot-name');
+  if (nameInput) nameInput.focus();
+}
+
+function handleConfirmAddPot() {
+  const nameInput = document.getElementById('new-pot-name');
+  const drippersInput = document.getElementById('new-pot-drippers');
+  const errorEl = document.getElementById('new-pot-drippers-error');
+
+  if (!nameInput || !drippersInput) return;
+
+  // Validate dripper count
+  const dripperCount = parseInt(drippersInput.value, 10);
+  if (isNaN(dripperCount) || dripperCount < 1 || dripperCount > 20 || !Number.isInteger(parseFloat(drippersInput.value))) {
+    if (errorEl) {
+      errorEl.textContent = 'Inserire un numero intero tra 1 e 20';
+    }
+    drippersInput.classList.add('input-error');
+    return;
+  }
+
+  // Get name (use default if empty)
+  let name = nameInput.value.trim();
+  if (!name) {
+    name = generateDefaultName();
+  }
+  // Enforce max 40 chars
+  name = name.substring(0, 40);
+
   const nextId = `pot-${Date.now()}`;
-  const name = generateDefaultName();
+  const drippers = [];
+  for (let i = 0; i < dripperCount; i++) {
+    drippers.push({ id: `d-${Date.now()}-${i}`, flowRate: null, unit: 'l/min' });
+  }
+
   const newPot = {
     id: nextId,
     name: name,
@@ -439,12 +829,17 @@ function handleAddPot() {
     uniformValue: null,
     uniformUnit: 'l/min',
     nonUniformWeights: false,
-    weights: [1],
-    drippers: [{ id: `d-${Date.now()}`, flowRate: null, unit: 'l/min' }]
+    weights: Array(dripperCount).fill(1),
+    drippers: drippers
   };
   state.pots.push(newPot);
   debouncedSave();
   render();
+}
+
+function handleCancelAddPot() {
+  const form = document.querySelector('.add-pot-form');
+  if (form) form.remove();
 }
 
 function handleRemovePot(potId) {
@@ -475,6 +870,28 @@ function handleDuplicatePot(potId) {
   render();
 }
 
+function handleAddDripper(potId) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+  if (pot.drippers.length >= 20) return;
+
+  pot.drippers.push({ id: `d-${Date.now()}`, flowRate: null, unit: 'l/min' });
+  pot.weights = pot.drippers.map((_, i) => pot.weights[i] || 1);
+  debouncedSave();
+  render();
+}
+
+function handleRemoveDripper(potId, dripperId) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+  if (pot.drippers.length <= 1) return;
+
+  pot.drippers = pot.drippers.filter(d => d.id !== dripperId);
+  pot.weights = pot.drippers.map((_, i) => pot.weights[i] || 1);
+  debouncedSave();
+  render();
+}
+
 function handleDripperChange(potId, dripperId, field, value) {
   const pot = state.pots.find(p => p.id === potId);
   if (!pot) return;
@@ -482,8 +899,208 @@ function handleDripperChange(potId, dripperId, field, value) {
   if (!dripper) return;
 
   dripper[field] = value;
+
+  // Sync uniform value from drippers if in uniform mode
+  if (pot.uniformFlow) {
+    pot.uniformValue = dripper.flowRate;
+    pot.uniformUnit = dripper.unit;
+  }
+
+  debouncedSave();
+  updateTotals();
+  updatePotResult(potId);
+
+  // Trigger debounced validation for flow rate changes
+  if (field === 'flowRate' || field === 'unit') {
+    debouncedValidateDripper(potId, dripperId);
+  }
+}
+
+/**
+ * Handles uniform value change — updates uniformValue and all drippers.
+ */
+function handleUniformValueChange(potId, value) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+
+  pot.uniformValue = value;
+  // Apply to all drippers
+  pot.drippers.forEach(d => { d.flowRate = value; });
+
+  debouncedSave();
+  updateTotals();
+  updatePotResult(potId);
+
+  // Trigger debounced validation for the uniform input
+  debouncedValidateUniform(potId);
+}
+
+/**
+ * Handles uniform unit change — updates uniformUnit and all dripper units.
+ */
+function handleUniformUnitChange(potId, unit) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+
+  pot.uniformUnit = unit;
+  // Apply unit to all drippers
+  pot.drippers.forEach(d => { d.unit = unit; });
+
+  debouncedSave();
+  updateTotals();
+  updatePotResult(potId);
+
+  // Trigger debounced validation
+  debouncedValidateUniform(potId);
+}
+
+/**
+ * Switches a pot to uniform mode.
+ * If all drippers have same value AND same unit, use that; otherwise use first dripper's value/unit.
+ */
+function handleSetUniform(potId) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot || pot.uniformFlow) return;
+
+  pot.uniformFlow = true;
+
+  if (pot.drippers.length > 0) {
+    const firstValue = pot.drippers[0].flowRate;
+    const firstUnit = pot.drippers[0].unit;
+    const allSame = pot.drippers.every(d => d.flowRate === firstValue && d.unit === firstUnit);
+
+    pot.uniformValue = firstValue;
+    pot.uniformUnit = firstUnit;
+
+    if (!allSame) {
+      showToast('Valori differenti trovati: utilizzato il valore del primo gocciolatore.', 'info');
+    }
+  }
+
   debouncedSave();
   render();
+}
+
+/**
+ * Switches a pot to differentiated mode.
+ * Copies uniformValue and uniformUnit to each dripper.
+ */
+function handleSetDifferentiated(potId) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot || !pot.uniformFlow) return;
+
+  pot.uniformFlow = false;
+
+  // Copy uniform value to all drippers
+  pot.drippers.forEach(d => {
+    d.flowRate = pot.uniformValue;
+    d.unit = pot.uniformUnit;
+  });
+
+  debouncedSave();
+  render();
+}
+
+// ─── Flow Rate Validation (500ms debounce) ───────────────────────────────────
+
+/**
+ * Debounced validation for a specific dripper's flow rate.
+ */
+function debouncedValidateDripper(potId, dripperId) {
+  const timerKey = `${potId}-${dripperId}`;
+  if (validationTimers[timerKey]) {
+    clearTimeout(validationTimers[timerKey]);
+  }
+  validationTimers[timerKey] = setTimeout(() => {
+    validateAndShowDripperError(potId, dripperId);
+    delete validationTimers[timerKey];
+  }, 500);
+}
+
+/**
+ * Debounced validation for a uniform flow input.
+ */
+function debouncedValidateUniform(potId) {
+  const timerKey = `uniform-${potId}`;
+  if (validationTimers[timerKey]) {
+    clearTimeout(validationTimers[timerKey]);
+  }
+  validationTimers[timerKey] = setTimeout(() => {
+    validateAndShowUniformError(potId);
+    delete validationTimers[timerKey];
+  }, 500);
+}
+
+/**
+ * Validates a dripper's flow rate and shows/hides error UI.
+ */
+function validateAndShowDripperError(potId, dripperId) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+  const dripper = pot.drippers.find(d => d.id === dripperId);
+  if (!dripper) return;
+
+  const input = document.querySelector(`.dripper-flow[data-pot-id="${potId}"][data-dripper-id="${dripperId}"]`);
+  const errorEl = document.querySelector(`.error-message[data-validation-for="${dripperId}"]`);
+  if (!input || !errorEl) return;
+
+  const value = dripper.flowRate;
+
+  // Exclude empty/zero/non-numeric values — no warning shown
+  if (value == null || value === 0 || typeof value !== 'number' || isNaN(value)) {
+    input.classList.remove('error');
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+    return;
+  }
+
+  const lpm = toLitersPerMinute(value, dripper.unit, state.dropFactor);
+  const result = validateFlowRate(lpm);
+
+  if (!result.valid) {
+    input.classList.add('error');
+    errorEl.style.display = 'block';
+    errorEl.textContent = `Portata fuori range: ${lpm.toFixed(2)} l/min. Range consentito: 1–8 l/min`;
+  } else {
+    input.classList.remove('error');
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+  }
+}
+
+/**
+ * Validates the uniform flow input and shows/hides error UI.
+ */
+function validateAndShowUniformError(potId) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+
+  const input = document.querySelector(`.uniform-flow[data-pot-id="${potId}"]`);
+  const errorEl = document.querySelector(`.error-message[data-validation-for="uniform-${potId}"]`);
+  if (!input || !errorEl) return;
+
+  const value = pot.uniformValue;
+
+  // Exclude empty/zero/non-numeric values — no warning shown
+  if (value == null || value === 0 || typeof value !== 'number' || isNaN(value)) {
+    input.classList.remove('error');
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+    return;
+  }
+
+  const lpm = toLitersPerMinute(value, pot.uniformUnit, state.dropFactor);
+  const result = validateFlowRate(lpm);
+
+  if (!result.valid) {
+    input.classList.add('error');
+    errorEl.style.display = 'block';
+    errorEl.textContent = `Portata fuori range: ${lpm.toFixed(2)} l/min. Range consentito: 1–8 l/min`;
+  } else {
+    input.classList.remove('error');
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+  }
 }
 
 function handleModeSwitch(mode) {

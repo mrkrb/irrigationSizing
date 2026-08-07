@@ -765,3 +765,128 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 .confirm-dialog-actions button.confirm-danger:hover {
   opacity: 0.9;
 }
+
+/* ===== ADD POT FORM ===== */
+.add-pot-form {
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.add-pot-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.add-pot-form__field label {
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+}
+
+.add-pot-form__field input {
+  min-height: var(--touch-min);
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+}
+
+.add-pot-form__field input.input-error {
+  border-color: var(--color-error);
+}
+
+.add-pot-form__error {
+  color: var(--color-error);
+  font-size: var(--font-size-label);
+  min-height: 1.2em;
+}
+
+.add-pot-form__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.add-pot-form__actions button {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.add-pot-form__actions button[data-action="confirm-add-pot"] {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+.add-pot-form__actions button[data-action="confirm-add-pot"]:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.add-pot-form__actions button[data-action="cancel-add-pot"]:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+/* ===== DRIPPER ADD/REMOVE BUTTONS ===== */
+.btn-add-dripper {
+  min-height: var(--touch-min);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-label);
+  border: 1px dashed var(--color-primary);
+  border-radius: var(--radius);
+  background-color: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  margin-top: var(--spacing-sm);
+}
+
+.btn-add-dripper:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-primary-hover);
+}
+
+.btn-remove-dripper {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-label);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-input-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-remove-dripper:hover:not(:disabled) {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.btn-remove-dripper:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== DRIPPER COUNT INFO ===== */
+.dripper-count-info {
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  margin: var(--spacing-xs) 0 0 0;
+}
