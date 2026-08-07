@@ -11,7 +11,16 @@
  * @returns {number} Flow rate in l/min
  */
 export function toLitersPerMinute(value, unit, dropFactor = 20) {
-  // TODO: implement
+  switch (unit) {
+    case 'l/min':
+      return value;
+    case 'l/h':
+      return value / 60;
+    case 'gocce/min':
+      return value / (dropFactor * 1000);
+    default:
+      return value;
+  }
 }
 
 /**
@@ -22,7 +31,16 @@ export function toLitersPerMinute(value, unit, dropFactor = 20) {
  * @returns {number} Flow rate in target unit
  */
 export function fromLitersPerMinute(lpm, targetUnit, dropFactor = 20) {
-  // TODO: implement
+  switch (targetUnit) {
+    case 'l/min':
+      return lpm;
+    case 'l/h':
+      return lpm * 60;
+    case 'gocce/min':
+      return lpm * dropFactor * 1000;
+    default:
+      return lpm;
+  }
 }
 
 /**
