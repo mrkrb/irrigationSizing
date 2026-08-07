@@ -114,6 +114,7 @@ export function render() {
 
   // Update totals
   updateTotals();
+  updateTotalsVisibility();
 
   // Update time slider display
   const timeValue = document.getElementById('time-value');
@@ -516,6 +517,15 @@ function updateTotals() {
 }
 
 /**
+ * Shows/hides the #totals section based on mode (only visible in verifica mode).
+ */
+function updateTotalsVisibility() {
+  const totalsSection = document.getElementById('totals');
+  if (!totalsSection) return;
+  totalsSection.style.display = state.mode === 'verifica' ? '' : 'none';
+}
+
+/**
  * Updates the result display for a specific pot without full re-render.
  */
 function updatePotResult(potId) {
@@ -527,22 +537,16 @@ function updatePotResult(potId) {
   if (!pot) return;
 
   if (state.mode === 'verifica') {
+    resultEl.classList.remove('pot-card__result--warning');
     if (state.timeMinutes > 0) {
       const liters = calculateVerification(pot.drippers, state.timeMinutes, state.dropFactor);
       resultEl.textContent = `Acqua erogata: ${liters.toFixed(2)} l`;
-      resultEl.classList.remove('pot-card__result--warning');
     } else {
       resultEl.textContent = 'Impostare tempo > 0 per il calcolo';
       resultEl.classList.add('pot-card__result--warning');
     }
   } else {
-    const desiredLiters = state.desiredLiters[pot.id] || 0;
-    if (state.timeMinutes > 0 && desiredLiters > 0 && pot.drippers.length > 0) {
-      const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
-      resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
-    } else {
-      resultEl.textContent = state.timeMinutes === 0 ? 'Impostare tempo > 0 per il calcolo' : '';
-    }
+    updateCalibrationResult(resultEl, pot);
   }
 }
 
@@ -716,6 +720,23 @@ function handleMainInput(e) {
     }
     return;
   }
+
+  // Desired liters input (calibration mode)
+  if (target.classList.contains('desired-liters')) {
+    const potId = target.dataset.potId;
+    const value = target.value === '' ? 0 : parseFloat(target.value);
+    handleDesiredLitersChange(potId, value);
+    return;
+  }
+
+  // Dripper weight input (calibration mode, non-uniform)
+  if (target.classList.contains('dripper-weight')) {
+    const potId = target.dataset.potId;
+    const index = parseInt(target.dataset.dripperIndex, 10);
+    const value = target.value === '' ? null : parseFloat(target.value);
+    handleWeightChange(potId, index, value);
+    return;
+  }
 }
 
 function handleMainChange(e) {
@@ -733,6 +754,13 @@ function handleMainChange(e) {
   if (target.classList.contains('uniform-unit')) {
     const potId = target.dataset.potId;
     handleUniformUnitChange(potId, target.value);
+    return;
+  }
+
+  // Non-uniform weights toggle (calibration mode)
+  if (target.classList.contains('nonuniform-toggle')) {
+    const potId = target.dataset.potId;
+    handleNonUniformToggle(potId, target.checked);
     return;
   }
 
@@ -1108,6 +1136,124 @@ function handleModeSwitch(mode) {
   state.mode = mode;
   debouncedSave();
   render();
+}
+
+/**
+ * Handles desired liters input change in calibration mode.
+ * @param {string} potId
+ * @param {number} value
+ */
+function handleDesiredLitersChange(potId, value) {
+  if (!isNaN(value) && value >= 0) {
+    state.desiredLiters[potId] = value;
+  } else {
+    state.desiredLiters[potId] = 0;
+  }
+  debouncedSave();
+  // Update result for this pot without full re-render
+  const card = document.querySelector(`.pot-card[data-pot-id="${potId}"]`);
+  if (card) {
+    const resultEl = card.querySelector('.pot-card__result');
+    const pot = state.pots.find(p => p.id === potId);
+    if (resultEl && pot) {
+      updateCalibrationResult(resultEl, pot);
+    }
+  }
+}
+
+/**
+ * Handles weight input change for non-uniform calibration.
+ * @param {string} potId
+ * @param {number} index - dripper index
+ * @param {number|null} value
+ */
+function handleWeightChange(potId, index, value) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+
+  if (!pot.weights) {
+    pot.weights = pot.drippers.map(() => 1);
+  }
+
+  pot.weights[index] = value;
+  debouncedSave();
+
+  // Update result for this pot without full re-render
+  const card = document.querySelector(`.pot-card[data-pot-id="${potId}"]`);
+  if (card) {
+    const resultEl = card.querySelector('.pot-card__result');
+    if (resultEl) {
+      updateCalibrationResult(resultEl, pot);
+    }
+  }
+}
+
+/**
+ * Handles non-uniform weights toggle.
+ * @param {string} potId
+ * @param {boolean} checked
+ */
+function handleNonUniformToggle(potId, checked) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return;
+
+  pot.nonUniformWeights = checked;
+
+  // Initialize weights array if needed
+  if (checked && (!pot.weights || pot.weights.length < pot.drippers.length)) {
+    pot.weights = pot.drippers.map((_, i) => (pot.weights && pot.weights[i]) || 1);
+  }
+
+  debouncedSave();
+  render();
+}
+
+/**
+ * Updates the calibration result display for a single pot card.
+ * @param {HTMLElement} resultEl - the .pot-card__result element
+ * @param {object} pot - the pot data
+ */
+function updateCalibrationResult(resultEl, pot) {
+  const desiredLiters = state.desiredLiters[pot.id] || 0;
+  resultEl.classList.remove('pot-card__result--warning');
+
+  if (state.timeMinutes === 0) {
+    resultEl.textContent = 'Impostare tempo > 0 per il calcolo';
+    resultEl.classList.add('pot-card__result--warning');
+  } else if (desiredLiters > 0 && pot.drippers.length > 0) {
+    if (pot.nonUniformWeights) {
+      const weightsValid = areWeightsValid(pot);
+      if (!weightsValid) {
+        resultEl.textContent = 'Pesi non validi. Inserire valori tra 1 e 10.';
+        resultEl.classList.add('pot-card__result--warning');
+      } else {
+        const weights = pot.weights.slice(0, pot.drippers.length);
+        const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
+        const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
+        resultEl.textContent = `Portate: ${flowTexts.join(', ')}`;
+        const anyOutOfRange = flowRates.some(f => !validateFlowRate(f).valid);
+        if (anyOutOfRange) {
+          const avgFlow = flowRates.reduce((s, f) => s + f, 0) / flowRates.length;
+          const bound = avgFlow < 1 ? 'min' : 'max';
+          const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
+          resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
+          resultEl.classList.add('pot-card__result--warning');
+        }
+      }
+    } else {
+      const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
+      resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+      const validation = validateFlowRate(requiredFlow);
+      if (!validation.valid) {
+        const bound = requiredFlow < 1 ? 'min' : 'max';
+        const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
+        resultEl.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
+        resultEl.classList.add('pot-card__result--warning');
+      }
+    }
+  } else {
+    resultEl.textContent = '';
+  }
 }
 
 function handleTimeChange(value) {
