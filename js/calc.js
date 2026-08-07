@@ -51,7 +51,15 @@ export function fromLitersPerMinute(lpm, targetUnit, dropFactor = 20) {
  * @returns {number} Total liters (2 decimal precision)
  */
 export function calculateVerification(drippers, timeMinutes, dropFactor) {
-  // TODO: implement
+  const totalFlowLpm = drippers.reduce((sum, dripper) => {
+    const rate = dripper.flowRate;
+    if (rate == null || rate === 0 || typeof rate !== 'number' || isNaN(rate)) {
+      return sum;
+    }
+    return sum + toLitersPerMinute(rate, dripper.unit, dropFactor);
+  }, 0);
+  const totalLiters = totalFlowLpm * timeMinutes;
+  return Math.round(totalLiters * 100) / 100;
 }
 
 /**
