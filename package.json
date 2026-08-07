@@ -1,6 +1,6 @@
 {
   "name": "irrigation-sizing",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Static webapp for managing drip irrigation of terrace pots",
   "type": "module",
   "scripts": {

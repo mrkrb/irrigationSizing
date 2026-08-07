@@ -16,7 +16,8 @@ let state = {
   mode: 'verifica',
   timeMinutes: 0,
   theme: 'light',
-  desiredLiters: {}
+  desiredLiters: {},
+  calibrationDisplayUnit: 'l/h'
 };
 
 let storageAvailable = true;
@@ -139,6 +140,16 @@ export function render() {
     tab.classList.toggle('active', isActive);
     tab.setAttribute('aria-pressed', String(isActive));
   });
+
+  // Show/hide calibration unit selector based on mode
+  const calibUnitSection = document.getElementById('calibration-unit-selector');
+  if (calibUnitSection) {
+    calibUnitSection.style.display = state.mode === 'taratura' ? '' : 'none';
+  }
+  const calibUnitSelect = document.getElementById('calibration-unit');
+  if (calibUnitSelect) {
+    calibUnitSelect.value = state.calibrationDisplayUnit;
+  }
 }
 
 /**
@@ -452,7 +463,10 @@ function renderPotCard(pot) {
         } else {
           const weights = pot.weights.slice(0, pot.drippers.length);
           const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
-          const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
+          const flowTexts = flowRates.map((f, i) => {
+            const displayVal = fromLitersPerMinute(f, state.calibrationDisplayUnit, state.dropFactor);
+            return `G${i + 1}: ${displayVal.toFixed(2)} ${state.calibrationDisplayUnit}`;
+          });
           resultEl.textContent = `Portate: ${flowTexts.join(', ')}`;
 
           // Check if any flow is out of range and show suggestion
@@ -468,7 +482,8 @@ function renderPotCard(pot) {
       } else {
         // Uniform calibration
         const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
-        resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+        const displayValue = fromLitersPerMinute(requiredFlow, state.calibrationDisplayUnit, state.dropFactor);
+        resultEl.textContent = `Portata necessaria: ${displayValue.toFixed(2)} ${state.calibrationDisplayUnit} per gocciolatore`;
 
         // Validate flow and show alternative time suggestion if out of range
         const validation = validateFlowRate(requiredFlow * 60);
@@ -742,6 +757,14 @@ function handleMainInput(e) {
 
 function handleMainChange(e) {
   const target = e.target;
+
+  // Calibration display unit selector
+  if (target.id === 'calibration-unit') {
+    state.calibrationDisplayUnit = target.value;
+    debouncedSave();
+    render();
+    return;
+  }
 
   // Dripper unit select (differentiated mode)
   if (target.classList.contains('dripper-unit') && !target.classList.contains('uniform-unit')) {
@@ -1232,7 +1255,10 @@ function updateCalibrationResult(resultEl, pot) {
       } else {
         const weights = pot.weights.slice(0, pot.drippers.length);
         const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
-        const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
+        const flowTexts = flowRates.map((f, i) => {
+          const displayVal = fromLitersPerMinute(f, state.calibrationDisplayUnit, state.dropFactor);
+          return `G${i + 1}: ${displayVal.toFixed(2)} ${state.calibrationDisplayUnit}`;
+        });
         resultEl.textContent = `Portate: ${flowTexts.join(', ')}`;
         const anyOutOfRange = flowRates.some(f => !validateFlowRate(f * 60).valid);
         if (anyOutOfRange) {
@@ -1245,7 +1271,8 @@ function updateCalibrationResult(resultEl, pot) {
       }
     } else {
       const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
-      resultEl.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+      const displayValue = fromLitersPerMinute(requiredFlow, state.calibrationDisplayUnit, state.dropFactor);
+      resultEl.textContent = `Portata necessaria: ${displayValue.toFixed(2)} ${state.calibrationDisplayUnit} per gocciolatore`;
       const validation = validateFlowRate(requiredFlow * 60);
       if (!validation.valid) {
         const bound = requiredFlow * 60 < 1 ? 'min' : 'max';
@@ -1301,7 +1328,10 @@ function handleTimeChange(value) {
           } else {
             const weights = pot.weights.slice(0, pot.drippers.length);
             const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
-            const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
+            const flowTexts = flowRates.map((f, i) => {
+              const displayVal = fromLitersPerMinute(f, state.calibrationDisplayUnit, state.dropFactor);
+              return `G${i + 1}: ${displayVal.toFixed(2)} ${state.calibrationDisplayUnit}`;
+            });
             el.textContent = `Portate: ${flowTexts.join(', ')}`;
             const anyOutOfRange = flowRates.some(f => !validateFlowRate(f * 60).valid);
             if (anyOutOfRange) {
@@ -1314,7 +1344,8 @@ function handleTimeChange(value) {
           }
         } else {
           const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
-          el.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+          const displayValue = fromLitersPerMinute(requiredFlow, state.calibrationDisplayUnit, state.dropFactor);
+          el.textContent = `Portata necessaria: ${displayValue.toFixed(2)} ${state.calibrationDisplayUnit} per gocciolatore`;
           const validation = validateFlowRate(requiredFlow * 60);
           if (!validation.valid) {
             const bound = requiredFlow * 60 < 1 ? 'min' : 'max';
@@ -1358,6 +1389,7 @@ async function handleImport(file) {
     state.mode = data.mode || 'verifica';
     state.timeMinutes = data.timeMinutes || 0;
     state.desiredLiters = data.desiredLiters || {};
+    state.calibrationDisplayUnit = data.calibrationDisplayUnit || 'l/h';
     if (data.theme) state.theme = data.theme;
     debouncedSave();
     render();
@@ -1376,7 +1408,8 @@ function handleReset() {
     mode: 'verifica',
     timeMinutes: 0,
     theme: state.theme,
-    desiredLiters: {}
+    desiredLiters: {},
+    calibrationDisplayUnit: 'l/h'
   };
   render();
   showToast('Configurazione resettata.', 'info');
@@ -1438,6 +1471,7 @@ export function init() {
       state.mode = result.data.mode || 'verifica';
       state.timeMinutes = result.data.timeMinutes || 0;
       state.desiredLiters = result.data.desiredLiters || {};
+      state.calibrationDisplayUnit = result.data.calibrationDisplayUnit || 'l/h';
       if (result.data.theme) {
         state.theme = result.data.theme;
       }
