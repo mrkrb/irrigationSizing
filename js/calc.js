@@ -108,5 +108,11 @@ export function suggestAlternativeTime(desiredLiters, dripperCount, bound) {
  * @returns {{valid: boolean, message?: string}}
  */
 export function validateFlowRate(valueLpm) {
-  // TODO: implement
+  if (valueLpm >= 1 && valueLpm <= 8) {
+    return { valid: true };
+  }
+  if (valueLpm < 1) {
+    return { valid: false, message: 'Portata inferiore al minimo consentito (1 l/min)' };
+  }
+  return { valid: false, message: 'Portata superiore al massimo consentito (8 l/min)' };
 }
