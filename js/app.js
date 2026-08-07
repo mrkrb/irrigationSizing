@@ -1119,6 +1119,7 @@ function handleTimeChange(value) {
   debouncedSave();
   // Update results directly without full re-render for responsiveness
   updateTotals();
+  updateTotalsVisibility();
   document.querySelectorAll('.pot-card__result').forEach(el => {
     const card = el.closest('.pot-card');
     if (!card) return;
@@ -1134,6 +1135,48 @@ function handleTimeChange(value) {
       } else {
         el.textContent = 'Impostare tempo > 0 per il calcolo';
         el.classList.add('pot-card__result--warning');
+      }
+    } else {
+      // Taratura mode — recalculate calibration results
+      const desiredLiters = state.desiredLiters[potId] || 0;
+      if (state.timeMinutes === 0) {
+        el.textContent = 'Impostare tempo > 0 per il calcolo';
+        el.classList.add('pot-card__result--warning');
+      } else if (desiredLiters > 0 && pot.drippers.length > 0) {
+        el.classList.remove('pot-card__result--warning');
+        if (pot.nonUniformWeights) {
+          const weightsValid = areWeightsValid(pot);
+          if (!weightsValid) {
+            el.textContent = 'Pesi non validi. Inserire valori tra 1 e 10.';
+            el.classList.add('pot-card__result--warning');
+          } else {
+            const weights = pot.weights.slice(0, pot.drippers.length);
+            const flowRates = calculateWeightedCalibration(desiredLiters, state.timeMinutes, weights);
+            const flowTexts = flowRates.map((f, i) => `G${i + 1}: ${f.toFixed(2)} l/min`);
+            el.textContent = `Portate: ${flowTexts.join(', ')}`;
+            const anyOutOfRange = flowRates.some(f => !validateFlowRate(f).valid);
+            if (anyOutOfRange) {
+              const avgFlow = flowRates.reduce((s, f) => s + f, 0) / flowRates.length;
+              const bound = avgFlow < 1 ? 'min' : 'max';
+              const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
+              el.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
+              el.classList.add('pot-card__result--warning');
+            }
+          }
+        } else {
+          const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);
+          el.textContent = `Portata necessaria: ${requiredFlow.toFixed(2)} l/min per gocciolatore`;
+          const validation = validateFlowRate(requiredFlow);
+          if (!validation.valid) {
+            const bound = requiredFlow < 1 ? 'min' : 'max';
+            const suggestedTime = suggestAlternativeTime(desiredLiters, pot.drippers.length, bound);
+            el.textContent += ` — Portata fuori range. Tempo suggerito: ${suggestedTime} min`;
+            el.classList.add('pot-card__result--warning');
+          }
+        }
+      } else {
+        el.textContent = '';
+        el.classList.remove('pot-card__result--warning');
       }
     }
   });
