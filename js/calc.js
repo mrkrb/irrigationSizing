@@ -70,7 +70,7 @@ export function calculateVerification(drippers, timeMinutes, dropFactor) {
  * @returns {number} Required flow rate in l/min
  */
 export function calculateCalibration(desiredLiters, timeMinutes, dripperCount) {
-  // TODO: implement
+  return desiredLiters / timeMinutes / dripperCount;
 }
 
 /**
@@ -81,7 +81,9 @@ export function calculateCalibration(desiredLiters, timeMinutes, dripperCount) {
  * @returns {number[]} Required flow rate per dripper in l/min
  */
 export function calculateWeightedCalibration(desiredLiters, timeMinutes, weights) {
-  // TODO: implement
+  const totalFlow = desiredLiters / timeMinutes;
+  const sumWeights = weights.reduce((sum, w) => sum + w, 0);
+  return weights.map(w => (w / sumWeights) * totalFlow);
 }
 
 /**
@@ -89,10 +91,15 @@ export function calculateWeightedCalibration(desiredLiters, timeMinutes, weights
  * @param {number} desiredLiters - Target liters
  * @param {number} dripperCount - Number of drippers
  * @param {'min'|'max'} bound - Which bound was exceeded
- * @returns {number} Suggested time in minutes
+ * @returns {number} Suggested time in minutes (rounded to nearest 0.5)
  */
 export function suggestAlternativeTime(desiredLiters, dripperCount, bound) {
-  // TODO: implement
+  // 'min' means flow was below minimum (1 l/min) → use 1 l/min to get longer time
+  // 'max' means flow exceeded maximum (8 l/min) → use 8 l/min to get shorter time
+  const boundaryFlow = bound === 'max' ? 8 : 1;
+  const time = desiredLiters / (dripperCount * boundaryFlow);
+  // Round to nearest 0.5 for slider compatibility (step 0.5)
+  return Math.round(time * 2) / 2;
 }
 
 /**
