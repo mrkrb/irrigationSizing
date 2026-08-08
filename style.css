@@ -227,24 +227,12 @@ main {
   gap: var(--spacing-sm);
 }
 
-.pot-card-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.pot-card-header input[type="text"] {
-  flex: 1;
-  min-width: 0;
-}
-
-.pot-card-actions {
+.pot-card__actions {
   display: flex;
   gap: var(--spacing-sm);
 }
 
-.pot-card-actions button {
+.pot-card__actions button {
   min-height: var(--touch-min);
   min-width: var(--touch-min);
   display: flex;
@@ -259,12 +247,12 @@ main {
   transition: border-color 0.2s, background-color 0.2s;
 }
 
-.pot-card-actions button:hover {
+.pot-card__actions button:hover {
   border-color: var(--color-primary);
   background-color: var(--color-surface);
 }
 
-.pot-card-actions button.remove-btn:hover {
+.pot-card__actions button.remove-btn:hover {
   border-color: var(--color-error);
   color: var(--color-error);
 }
@@ -899,28 +887,71 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   margin: var(--spacing-xs) 0 0 0;
 }
 
-/* ===== CALIBRATION UNIT SELECTOR ===== */
-#calibration-unit-selector {
-  background-color: var(--color-surface);
-  border-radius: var(--radius);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-border);
+/* ===== COLLAPSIBLE POT CARDS ===== */
+.pot-card.collapsed .pot-card__body {
+  display: none;
+}
+
+.pot-card__header {
+  cursor: pointer;
+  user-select: none;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
-#calibration-unit-selector label {
+.pot-card__chevron {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  width: 1em;
+}
+
+.pot-card__name {
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pot-card__summary {
+  font-weight: 600;
+  color: var(--color-primary);
   font-size: var(--font-size-label);
+  margin-left: auto;
   white-space: nowrap;
 }
 
-#calibration-unit {
-  min-height: var(--touch-min);
-  padding: var(--spacing-sm);
-  font-size: var(--font-size-label);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
-  background-color: var(--color-input-bg);
-  color: var(--color-text);
+.pot-card:not(.collapsed) .pot-card__summary {
+  display: none;
+}
+
+.pot-card.collapsed .pot-card__actions {
+  display: none;
+}
+
+/* ===== INLINE UNIT SELECTOR ===== */
+.inline-unit-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
+  min-height: auto;
+  line-height: inherit;
+}
+
+.inline-unit-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
