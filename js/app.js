@@ -249,7 +249,7 @@ function renderPotCard(pot) {
     uniformRow.className = 'dripper-row dripper-row--uniform';
 
     const label = document.createElement('label');
-    label.textContent = 'Portata per tutti:';
+    label.textContent = 'Portata:';
 
     const input = document.createElement('input');
     input.type = 'number';
