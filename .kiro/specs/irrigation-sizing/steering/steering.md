@@ -9,6 +9,13 @@ Questo documento descrive il "modus operandi" condiviso tra i progetti webapp sv
 - Persistenza dei dati solo lato client (localStorage o simili), salvo diversa indicazione esplicita nei requisiti del singolo progetto.
 - Hosting su GitHub Pages: la struttura del repository deve essere compatibile con la pubblicazione diretta (es. root o cartella `/docs`), senza step di build obbligatori per andare online.
 
+## Git e deployment
+
+- Il progetto è hostato in una repository Git (GitHub).
+- L'agente (Kiro) è responsabile di gestire commit e push automaticamente al completamento di ogni task o modifica.
+- L'agente deve usare le API di GitHub (tramite `gh` CLI) per configurare la repository come GitHub Pages (deploy dal branch `main`, root `/`).
+- Dopo ogni push sul branch `main`, l'agente deve verificare lo stato del deployment della pagina usando le API di GitHub (es. `gh api repos/{owner}/{repo}/pages`).
+
 ## Metodologia di sviluppo
 
 - Sviluppo spec-driven: i requisiti vengono scritti in formato EARS (WHEN/IF/THE SYSTEM SHALL) prima di iniziare l'implementazione.
@@ -26,6 +33,7 @@ Questo documento descrive il "modus operandi" condiviso tra i progetti webapp sv
 - Ogni progetto deve avere un numero di versione nel formato `x.x.x` (major.minor.patch), seguendo il versionamento semantico.
 - La versione corrente deve essere sempre visibile in calce alla webapp (footer), così che l'utente abbia sempre ben chiaro quale versione sta utilizzando.
 - La versione deve essere mantenuta in un file dedicato (es. `js/version.js`) e riportata anche nel `package.json`.
+- Ogni volta che la versione viene aggiornata, deve essere creato un tag git corrispondente (es. `v1.4.0`).
 
 ## Installabilità e identità dell'app
 
