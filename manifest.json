@@ -1,0 +1,18 @@
+{
+  "name": "Irrigazione Terrazzo",
+  "short_name": "Irrigazione",
+  "description": "Gestione irrigazione a goccia per vasi da terrazzo",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2e7d32",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

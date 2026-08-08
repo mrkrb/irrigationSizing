@@ -674,6 +674,35 @@ function setupEventDelegation() {
   if (themeToggle) {
     themeToggle.addEventListener('click', handleThemeToggle);
   }
+
+  // Settings panel toggle
+  const settingsToggle = document.getElementById('settings-toggle');
+  if (settingsToggle) {
+    settingsToggle.addEventListener('click', () => {
+      const panel = document.getElementById('settings-panel');
+      if (panel) panel.hidden = false;
+    });
+  }
+
+  const closeSettings = document.getElementById('close-settings');
+  if (closeSettings) {
+    closeSettings.addEventListener('click', () => {
+      const panel = document.getElementById('settings-panel');
+      if (panel) panel.hidden = true;
+    });
+  }
+
+  const settingsPanel = document.getElementById('settings-panel');
+  if (settingsPanel) {
+    // Close when clicking overlay background
+    settingsPanel.addEventListener('click', (e) => {
+      if (e.target === settingsPanel) settingsPanel.hidden = true;
+    });
+    // Delegate input/change/click events within settings panel
+    settingsPanel.addEventListener('click', handleSettingsPanelClick);
+    settingsPanel.addEventListener('input', handleSettingsPanelInput);
+    settingsPanel.addEventListener('change', handleSettingsPanelChange);
+  }
 }
 
 function handleMainClick(e) {
@@ -740,18 +769,6 @@ function handleMainClick(e) {
     handleSetDifferentiated(target.dataset.potId);
     return;
   }
-
-  // Export button
-  if (target.id === 'export-btn' || target.closest('#export-btn')) {
-    handleExport();
-    return;
-  }
-
-  // Reset button
-  if (target.id === 'reset-btn' || target.closest('#reset-btn')) {
-    handleReset();
-    return;
-  }
 }
 
 function handleMainInput(e) {
@@ -777,17 +794,6 @@ function handleMainInput(e) {
     const potId = target.dataset.potId;
     const value = target.value === '' ? null : parseFloat(target.value);
     handleUniformValueChange(potId, value);
-    return;
-  }
-
-  // Drop factor
-  if (target.id === 'drop-factor') {
-    const val = parseInt(target.value, 10);
-    if (!isNaN(val) && val >= 1 && val <= 100) {
-      state.dropFactor = val;
-      debouncedSave();
-      render();
-    }
     return;
   }
 
@@ -850,14 +856,6 @@ function handleMainChange(e) {
     handleNonUniformToggle(potId, target.checked);
     return;
   }
-
-  // Import file
-  if (target.id === 'import-file') {
-    if (target.files && target.files[0]) {
-      handleImport(target.files[0]);
-    }
-    return;
-  }
 }
 
 function handleHeaderClick(e) {
@@ -866,6 +864,49 @@ function handleHeaderClick(e) {
   // Mode tabs
   if (target.classList.contains('mode-tab')) {
     handleModeSwitch(target.dataset.mode);
+    return;
+  }
+}
+
+function handleSettingsPanelClick(e) {
+  const target = e.target;
+
+  // Export button
+  if (target.id === 'export-btn' || target.closest('#export-btn')) {
+    handleExport();
+    return;
+  }
+
+  // Reset button
+  if (target.id === 'reset-btn' || target.closest('#reset-btn')) {
+    handleReset();
+    return;
+  }
+}
+
+function handleSettingsPanelInput(e) {
+  const target = e.target;
+
+  // Drop factor
+  if (target.id === 'drop-factor') {
+    const val = parseInt(target.value, 10);
+    if (!isNaN(val) && val >= 1 && val <= 100) {
+      state.dropFactor = val;
+      debouncedSave();
+      render();
+    }
+    return;
+  }
+}
+
+function handleSettingsPanelChange(e) {
+  const target = e.target;
+
+  // Import file
+  if (target.id === 'import-file') {
+    if (target.files && target.files[0]) {
+      handleImport(target.files[0]);
+    }
     return;
   }
 }
@@ -1470,6 +1511,11 @@ export function init() {
   // 6. Display version
   const versionEl = document.getElementById('app-version');
   if (versionEl) versionEl.textContent = `v${APP_VERSION}`;
+
+  // 7. Register service worker for PWA/offline support
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
 }
 
 // Auto-initialize on DOMContentLoaded

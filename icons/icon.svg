@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#2e7d32"/>
+  <g transform="translate(256, 256)">
+    <!-- Water drop -->
+    <path d="M0,-140 C60,-60 80,20 80,60 C80,110 44,140 0,140 C-44,140 -80,110 -80,60 C-80,20 -60,-60 0,-140 Z" fill="#ffffff" opacity="0.9"/>
+    <!-- Small drops (drippers) -->
+    <circle cx="-90" cy="100" r="16" fill="#81c784"/>
+    <circle cx="90" cy="100" r="16" fill="#81c784"/>
+    <circle cx="0" cy="160" r="12" fill="#81c784"/>
+    <!-- Leaf/plant accent -->
+    <path d="M-40,-180 Q-20,-200 0,-180 Q-20,-160 -40,-180 Z" fill="#81c784"/>
+    <path d="M40,-180 Q20,-200 0,-180 Q20,-160 40,-180 Z" fill="#81c784"/>
+  </g>
+</svg>

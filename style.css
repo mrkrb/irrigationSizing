@@ -370,7 +370,78 @@ label {
   color: var(--color-primary);
 }
 
-/* ===== SETTINGS SECTION ===== */
+/* ===== SETTINGS SECTION (panel overlay) ===== */
+.settings-panel {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+}
+
+.settings-panel[hidden] {
+  display: none;
+}
+
+.settings-panel__content {
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.settings-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-panel__header h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+#close-settings {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+#settings-toggle {
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-input-bg);
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: border-color 0.2s;
+}
+
+#settings-toggle:hover {
+  border-color: var(--color-primary);
+}
+
 #settings {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);

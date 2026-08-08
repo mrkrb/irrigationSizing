@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Irrigazione Terrazzo</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2e7d32">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
 </head>
 <body>
   <header>
@@ -14,6 +20,7 @@
       <button class="mode-tab" data-mode="taratura" aria-pressed="false">Taratura</button>
     </nav>
     <button id="theme-toggle" aria-label="Cambia tema chiaro/scuro">🌓</button>
+    <button id="settings-toggle" aria-label="Impostazioni">⚙️</button>
   </header>
 
   <main>
@@ -30,8 +37,15 @@
     <section id="totals">
       <p>Totale acqua erogata: <span id="total-liters">0.00</span> l</p>
     </section>
+  </main>
 
-    <section id="settings">
+  <!-- Settings panel (separate from main functionality) -->
+  <div id="settings-panel" class="settings-panel" hidden>
+    <div class="settings-panel__content">
+      <div class="settings-panel__header">
+        <h2>Impostazioni</h2>
+        <button id="close-settings" type="button" aria-label="Chiudi impostazioni">✕</button>
+      </div>
       <div class="setting-row">
         <label for="drop-factor">Fattore di conversione (gocce/ml):</label>
         <input type="number" id="drop-factor" min="1" max="100" step="1" value="20">
@@ -42,8 +56,8 @@
         <input type="file" id="import-file" accept=".json" hidden>
         <button id="reset-btn" type="button">Reset configurazione</button>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <footer>
     <p>Irrigazione Terrazzo — Gestione irrigazione a goccia</p>
