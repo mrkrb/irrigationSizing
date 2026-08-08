@@ -61,15 +61,15 @@ describe('suggestAlternativeTime', () => {
 
   it('should suggest shorter time when flow exceeds maximum (bound=max)', () => {
     // 10 liters, 2 drippers, boundary = 8 l/h = 8/60 l/min
-    // time = 10 / (2 * 8/60) = 10 * 60 / 16 = 37.5
-    expect(suggestAlternativeTime(10, 2, 'max')).toBe(37.5);
+    // time = 10 / (2 * 8/60) = 10 * 60 / 16 = 37.5 → rounded to 38
+    expect(suggestAlternativeTime(10, 2, 'max')).toBe(38);
   });
 
-  it('should round result to nearest 0.5 (slider step)', () => {
-    // 3 liters, 1 dripper, bound=max → time = 3 / (1 * 8/60) = 3 * 60/8 = 22.5
-    expect(suggestAlternativeTime(3, 1, 'max')).toBe(22.5);
-    // 7 liters, 1 dripper, bound=max → time = 7 / (8/60) = 7 * 60/8 = 52.5
-    expect(suggestAlternativeTime(7, 1, 'max')).toBe(52.5);
+  it('should round result to nearest whole minute (slider step)', () => {
+    // 3 liters, 1 dripper, bound=max → time = 3 / (1 * 8/60) = 3 * 60/8 = 22.5 → 23
+    expect(suggestAlternativeTime(3, 1, 'max')).toBe(23);
+    // 7 liters, 1 dripper, bound=max → time = 7 / (8/60) = 7 * 60/8 = 52.5 → 53
+    expect(suggestAlternativeTime(7, 1, 'max')).toBe(53);
   });
 
   it('should handle single dripper correctly', () => {

@@ -100,13 +100,13 @@ export function toLitersPerHour(valueLpm) {
  * @param {number} desiredLiters - Target liters
  * @param {number} dripperCount - Number of drippers
  * @param {'min'|'max'} bound - Which bound was exceeded
- * @returns {number} Suggested time in minutes (rounded to nearest 0.5, capped at 60)
+ * @returns {number} Suggested time in minutes (rounded to nearest whole minute, capped at 60)
  */
 export function suggestAlternativeTime(desiredLiters, dripperCount, bound) {
   // boundary in l/min: 1 l/h = 1/60 l/min, 8 l/h = 8/60 l/min
   const boundaryFlowLpm = bound === 'max' ? (8 / 60) : (1 / 60);
   const time = desiredLiters / (dripperCount * boundaryFlowLpm);
-  const rounded = Math.round(time * 2) / 2;
+  const rounded = Math.round(time);
   return Math.min(rounded, 60);
 }
 
