@@ -597,7 +597,7 @@ function updateTotals() {
       totalEl.textContent = '0.00';
     }
   } else {
-    if (labelEl) labelEl.textContent = 'Totale acqua desiderata';
+    if (labelEl) labelEl.textContent = 'Totale acqua erogata';
     const total = state.pots.reduce((sum, pot) => {
       return sum + (state.desiredLiters[pot.id] || 0);
     }, 0);
