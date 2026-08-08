@@ -92,6 +92,10 @@ export function render() {
   const existingCards = potList.querySelectorAll('.pot-card');
   existingCards.forEach(card => card.remove());
 
+  // Remove the add-pot form if present (e.g. after confirm)
+  const addPotForm = potList.querySelector('.add-pot-form');
+  if (addPotForm) addPotForm.remove();
+
   if (state.pots.length === 0) {
     // Show empty state message
     let emptyMsg = potList.querySelector('.empty-state');
