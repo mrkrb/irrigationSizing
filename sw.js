@@ -1,4 +1,4 @@
-const CACHE_NAME = 'irrigation-sizer-v1.6.3';
+const CACHE_NAME = 'irrigation-sizer-v1.6.4';
 const ASSETS = [
   './',
   './index.html',

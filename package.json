@@ -1,6 +1,6 @@
 {
   "name": "irrigation-sizing",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Irrigation Sizer — Gestione irrigazione a goccia per vasi da terrazzo",
   "type": "module",
   "scripts": {

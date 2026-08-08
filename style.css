@@ -232,12 +232,7 @@ main {
   gap: var(--spacing-sm);
 }
 
-.pot-card input[type="number"],
-.pot-card input[type="text"],
-.pot-card select {
-  min-height: 34px;
-  padding: 4px 8px;
-}
+/* (removed: conflicting min-height rule — see uniform rule at end of file) */
 
 .pot-card__body {
   display: flex;
@@ -1001,23 +996,9 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   color: var(--color-text-secondary);
 }
 
-.pot-card .dripper-count-input {
-  width: 60px;
-  min-height: 30px;
-  padding: 3px 8px;
-  font-size: var(--font-size-input);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
-  background-color: var(--color-input-bg);
-  color: var(--color-text);
-}
+/* (removed: conflicting min-height rule — see uniform rule at end of file) */
 
-/* ===== UNIFORM DRIPPER ROW INPUTS ===== */
-.dripper-row--uniform input[type="number"],
-.dripper-row--uniform select {
-  min-height: 30px;
-  padding: 3px 8px;
-}
+/* (removed: conflicting min-height rule — see uniform rule at end of file) */
 
 /* ===== COLLAPSIBLE POT CARDS ===== */
 .pot-card.collapsed .pot-card__body {
@@ -1097,4 +1078,16 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   max-width: 70px;
   font-size: 0.7rem;
   padding: 1px 3px;
+}
+
+/* ===== FORCE UNIFORM INPUT HEIGHT IN POT CARDS ===== */
+.pot-card input[type="number"],
+.pot-card input[type="text"],
+.pot-card select:not(.inline-unit-select) {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 4px 8px !important;
+  font-size: 14px !important;
+  box-sizing: border-box !important;
 }
