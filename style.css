@@ -981,6 +981,29 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   margin: var(--spacing-xs) 0 0 0;
 }
 
+/* ===== EDITABLE DRIPPER COUNT ROW ===== */
+.dripper-count-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dripper-count-row label {
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+}
+
+.dripper-count-input {
+  width: 60px;
+  min-height: 34px;
+  padding: 4px 8px;
+  font-size: var(--font-size-input);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+}
+
 /* ===== COLLAPSIBLE POT CARDS ===== */
 .pot-card.collapsed .pot-card__body {
   display: none;
