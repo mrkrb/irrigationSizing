@@ -1,6 +1,6 @@
 {
-  "name": "Irrigazione Terrazzo",
-  "short_name": "Irrigazione",
+  "name": "Irrigation Sizer",
+  "short_name": "IrrigSizer",
   "description": "Gestione irrigazione a goccia per vasi da terrazzo",
   "start_url": "./index.html",
   "display": "standalone",
