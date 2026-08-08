@@ -1,4 +1,4 @@
-const CACHE_NAME = 'irrigation-sizer-v1.6.2';
+const CACHE_NAME = 'irrigation-sizer-v1.6.3';
 const ASSETS = [
   './',
   './index.html',
@@ -12,7 +12,7 @@ const ASSETS = [
   './icons/icon.svg'
 ];
 
-// Install: cache all static assets
+// Install: cache all static assets, then immediately activate
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -20,19 +20,35 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean ALL old caches, then take control immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: serve from cache first, fall back to network
+// Fetch: NETWORK-FIRST strategy
+// Try network first. If online, always serve fresh content and update cache.
+// If offline, fall back to cache.
 self.addEventListener('fetch', (event) => {
+  // Only handle same-origin GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((networkResponse) => {
+        // Got a fresh response — update the cache and return it
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseClone);
+        });
+        return networkResponse;
+      })
+      .catch(() => {
+        // Network failed — serve from cache (offline mode)
+        return caches.match(event.request);
+      })
   );
 });

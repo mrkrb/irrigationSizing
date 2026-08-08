@@ -1575,7 +1575,19 @@ export function init() {
 
   // 7. Register service worker for PWA/offline support
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then((registration) => {
+      // Check for updates every time the page loads
+      registration.update();
+
+      // When a new service worker takes over, reload to get fresh content
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+    }).catch(() => {});
   }
 }
 
