@@ -583,25 +583,35 @@ function areWeightsValid(pot) {
  */
 function updateTotals() {
   const totalEl = document.getElementById('total-liters');
+  const labelEl = document.getElementById('totals-label');
   if (!totalEl) return;
 
-  if (state.mode === 'verifica' && state.timeMinutes > 0) {
+  if (state.mode === 'verifica') {
+    if (labelEl) labelEl.textContent = 'Totale acqua erogata';
+    if (state.timeMinutes > 0) {
+      const total = state.pots.reduce((sum, pot) => {
+        return sum + calculateVerification(pot.drippers, state.timeMinutes, state.dropFactor);
+      }, 0);
+      totalEl.textContent = total.toFixed(2);
+    } else {
+      totalEl.textContent = '0.00';
+    }
+  } else {
+    if (labelEl) labelEl.textContent = 'Totale acqua desiderata';
     const total = state.pots.reduce((sum, pot) => {
-      return sum + calculateVerification(pot.drippers, state.timeMinutes, state.dropFactor);
+      return sum + (state.desiredLiters[pot.id] || 0);
     }, 0);
     totalEl.textContent = total.toFixed(2);
-  } else {
-    totalEl.textContent = '0.00';
   }
 }
 
 /**
- * Shows/hides the #totals section based on mode (only visible in verifica mode).
+ * Shows the #totals section (visible in both modes).
  */
 function updateTotalsVisibility() {
   const totalsSection = document.getElementById('totals');
   if (!totalsSection) return;
-  totalsSection.style.display = state.mode === 'verifica' ? '' : 'none';
+  totalsSection.style.display = '';
 }
 
 /**
