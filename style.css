@@ -981,11 +981,19 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   margin: var(--spacing-xs) 0 0 0;
 }
 
+/* ===== DRIPPERS CONTAINER ===== */
+.pot-card__drippers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* ===== EDITABLE DRIPPER COUNT ROW ===== */
 .dripper-count-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .dripper-count-row label {
@@ -995,13 +1003,20 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 
 .dripper-count-input {
   width: 60px;
-  min-height: 34px;
-  padding: 4px 8px;
+  min-height: 30px;
+  padding: 3px 8px;
   font-size: var(--font-size-input);
   border: 2px solid var(--color-border);
   border-radius: var(--radius);
   background-color: var(--color-input-bg);
   color: var(--color-text);
+}
+
+/* ===== UNIFORM DRIPPER ROW INPUTS ===== */
+.dripper-row--uniform input[type="number"],
+.dripper-row--uniform select {
+  min-height: 30px;
+  padding: 3px 8px;
 }
 
 /* ===== COLLAPSIBLE POT CARDS ===== */
