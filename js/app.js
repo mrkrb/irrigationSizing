@@ -461,11 +461,11 @@ function getCollapsedSummaryHTML(pot) {
       const liters = calculateVerification(pot.drippers, state.timeMinutes, state.dropFactor);
       return `${liters.toFixed(2)} l`;
     }
-    return '';
+    return '\u2014';
   }
   // Taratura mode
   const desiredLiters = state.desiredLiters[pot.id] || 0;
-  if (state.timeMinutes === 0 || desiredLiters <= 0 || pot.drippers.length === 0) return '';
+  if (state.timeMinutes === 0 || desiredLiters <= 0 || pot.drippers.length === 0) return '\u2014';
   if (pot.nonUniformWeights || !pot.uniformFlow) return '...';
   // Uniform calibration
   const requiredFlow = calculateCalibration(desiredLiters, state.timeMinutes, pot.drippers.length);

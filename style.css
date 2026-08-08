@@ -232,6 +232,19 @@ main {
   gap: var(--spacing-sm);
 }
 
+.pot-card input[type="number"],
+.pot-card input[type="text"],
+.pot-card select {
+  min-height: 34px;
+  padding: 4px 8px;
+}
+
+.pot-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .pot-card__actions {
   display: flex;
   gap: var(--spacing-sm);
@@ -267,7 +280,7 @@ main {
 .dripper-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -733,13 +746,13 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 }
 
 .toggle-btn {
-  min-height: 36px;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  min-height: 30px;
+  padding: 2px 10px;
   border: 2px solid var(--color-border);
   border-radius: var(--radius);
   background-color: var(--color-input-bg);
   color: var(--color-text);
-  font-size: var(--font-size-label);
+  font-size: 0.8rem;
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
 }
@@ -1030,9 +1043,20 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   cursor: pointer;
   min-height: auto;
   line-height: inherit;
+  max-width: 80px;
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .inline-unit-select:focus {
   outline: none;
   border-color: var(--color-primary);
+}
+
+/* In the summary (collapsed view), make it even more compact */
+.pot-card__summary .inline-unit-select {
+  max-width: 70px;
+  font-size: 0.7rem;
+  padding: 1px 3px;
 }
